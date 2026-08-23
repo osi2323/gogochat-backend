@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kingmobile
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+    volumes:
+      - ./livekit.yaml:/livekit.yaml
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

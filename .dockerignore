@@ -1,0 +1,38 @@
+# node_modules & cache
+node_modules
+npm-debug.log
+yarn-error.log
+.cache
+.next
+dist
+build
+
+# local envs
+.env
+.env.*
+!.env.example
+
+# git
+.git
+.gitignore
+
+# editor/system
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# test
+coverage
+*.test.ts
+*.spec.ts
+jest.config.js
+
+# Next.js build
+.next
+out
+# Logs
+*.log
+# Env
+.env.local
+.env.development
