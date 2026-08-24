@@ -81,6 +81,92 @@ export class SystemSettingsService {
     return this.toResponse(settings);
   }
 
+  async getHeaderRosterCandidates(): Promise<Array<{
+    id: number;
+    username: string;
+    icon: string | null;
+    gender: string | null;
+    roleName: string | null;
+    starCount: number;
+    starColor: string | null;
+  }>> {
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('user.deletedAt IS NULL')
+      .andWhere('(LOWER(user.username) = :root OR role.starCount >= :minStars)', {
+        root: 'root',
+        minStars: 1,
+      })
+      .orderBy('role.starCount', 'DESC')
+      .addOrderBy('user.username', 'ASC')
+      .getMany();
+
+    return users.map((user) => ({
+      id: user.id,
+      username: user.username,
+      icon: user.icon ?? null,
+      gender: user.gender ?? null,
+      roleName: user.role?.name ?? null,
+      starCount: Number(user.role?.starCount ?? 0),
+      starColor: user.role?.starColor ?? null,
+    }));
+  }
+
+  async getPublicHeaderRoster(): Promise<{
+    chatHeaderLogo: string | null;
+    siteName: string | null;
+    siteOwners: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
+    managers: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
+  }> {
+    const settings = await this.getOrCreate();
+    const ownerNames = Array.isArray(settings.siteOwnerUsernames) ? settings.siteOwnerUsernames : [];
+    const managerNames = Array.isArray(settings.managerUsernames) ? settings.managerUsernames : [];
+    const allNames = [...new Set([...ownerNames, ...managerNames].map((item) => item.trim()).filter(Boolean))];
+
+    if (allNames.length === 0) {
+      return {
+        chatHeaderLogo: settings.chatHeaderLogo ?? null,
+        siteName: settings.siteName ?? null,
+        siteOwners: [],
+        managers: [],
+      };
+    }
+
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('user.deletedAt IS NULL')
+      .andWhere('LOWER(user.username) IN (:...usernames)', {
+        usernames: allNames.map((item) => item.toLocaleLowerCase('tr-TR')),
+      })
+      .getMany();
+
+    const byName = new Map(
+      users.map((user) => [user.username.toLocaleLowerCase('tr-TR'), user]),
+    );
+    const mapNames = (names: string[]) =>
+      names
+        .map((name) => byName.get(name.toLocaleLowerCase('tr-TR')))
+        .filter((user): user is User => Boolean(user))
+        .map((user) => ({
+          id: user.id,
+          username: user.username,
+          icon: user.icon ?? null,
+          gender: user.gender ?? null,
+          roleName: user.role?.name ?? null,
+          starCount: Number(user.role?.starCount ?? 0),
+          starColor: user.role?.starColor ?? null,
+        }));
+
+    return {
+      chatHeaderLogo: settings.chatHeaderLogo ?? null,
+      siteName: settings.siteName ?? null,
+      siteOwners: mapNames(ownerNames),
+      managers: mapNames(managerNames),
+    };
+  }
+
   async getFirstMessageDelay(): Promise<FirstMessageDelayResponseDto> {
     const settings = await this.getOrCreate();
     return {
@@ -101,6 +187,9 @@ export class SystemSettingsService {
       homePageHtml: settings.homePageHtml ?? null,
       homePageImage: settings.homePageImage ?? null,
       homePageLogo: settings.homePageLogo ?? null,
+      chatHeaderLogo: settings.chatHeaderLogo ?? null,
+      siteOwnerUsernames: Array.isArray(settings.siteOwnerUsernames) ? settings.siteOwnerUsernames : [],
+      managerUsernames: Array.isArray(settings.managerUsernames) ? settings.managerUsernames : [],
       premiumArticleTopTitle: settings.premiumArticleTopTitle ?? null,
       premiumArticleTopContent: settings.premiumArticleTopContent ?? null,
       premiumArticleMiddleTitle: settings.premiumArticleMiddleTitle ?? null,
@@ -533,6 +622,33 @@ export class SystemSettingsService {
       settings.homePageLogo = null;
     }
 
+    if (this.isDataUrl(dto.chatHeaderLogo)) {
+      await this.deleteLocalFileIfExists(settings.chatHeaderLogo);
+      settings.chatHeaderLogo = await this.saveDataUrlAndReturnPath(
+        dto.chatHeaderLogo,
+      );
+    } else if (dto.chatHeaderLogo === null || dto.chatHeaderLogo === '') {
+      await this.deleteLocalFileIfExists(settings.chatHeaderLogo);
+      settings.chatHeaderLogo = null;
+    }
+
+    if (dto.siteOwnerUsernames !== undefined) {
+      settings.siteOwnerUsernames = [...new Set(
+        dto.siteOwnerUsernames.map((item) => String(item || '').trim()).filter(Boolean),
+      )].slice(0, 12);
+    }
+
+    if (dto.managerUsernames !== undefined) {
+      const ownerNames = new Set(
+        (settings.siteOwnerUsernames ?? []).map((item) => item.toLocaleLowerCase('tr-TR')),
+      );
+      settings.managerUsernames = [...new Set(
+        dto.managerUsernames.map((item) => String(item || '').trim()).filter(Boolean),
+      )]
+        .filter((item) => !ownerNames.has(item.toLocaleLowerCase('tr-TR')))
+        .slice(0, 20);
+    }
+
     const saved = await this.systemSettingsRepository.save(settings);
     const accessPolicy = {
       everyoneCanEnterDisabled:
@@ -814,6 +930,9 @@ export class SystemSettingsService {
       showMicrophonesOnMobile: settings.showMicrophonesOnMobile,
       homePageImage: settings.homePageImage ?? null,
       homePageLogo: settings.homePageLogo ?? null,
+      chatHeaderLogo: settings.chatHeaderLogo ?? null,
+      siteOwnerUsernames: Array.isArray(settings.siteOwnerUsernames) ? settings.siteOwnerUsernames : [],
+      managerUsernames: Array.isArray(settings.managerUsernames) ? settings.managerUsernames : [],
       premiumArticleTopTitle: settings.premiumArticleTopTitle ?? null,
       premiumArticleTopContent: settings.premiumArticleTopContent ?? null,
       premiumArticleMiddleTitle: settings.premiumArticleMiddleTitle ?? null,

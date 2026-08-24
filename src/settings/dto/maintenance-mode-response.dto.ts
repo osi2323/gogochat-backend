@@ -29,6 +29,15 @@ export class MaintenanceModeResponseDto {
   @ApiProperty({ example: 'path/to/logo.png', nullable: true })
   homePageLogo?: string | null;
 
+  @ApiProperty({ example: 'path/to/chat-logo.png', nullable: true })
+  chatHeaderLogo?: string | null;
+
+  @ApiProperty({ type: [String] })
+  siteOwnerUsernames: string[];
+
+  @ApiProperty({ type: [String] })
+  managerUsernames: string[];
+
   @ApiProperty({ nullable: true })
   premiumArticleTopTitle?: string | null;
 

@@ -125,6 +125,20 @@ export class SystemSettingsController {
     return this.systemSettingsService.getSettings();
   }
 
+  @Get('header-roster-candidates')
+  @ApiOperation({ summary: 'Üst alan site sahibi/yönetici adaylarını getir' })
+  async getHeaderRosterCandidates(@Request() req) {
+    await this.ensureSiteSettingsPermission(req);
+    return this.systemSettingsService.getHeaderRosterCandidates();
+  }
+
+  @Public()
+  @Get('public-header-roster')
+  @ApiOperation({ summary: 'Sohbet üst alan vitrin listesini getir (Public)' })
+  getPublicHeaderRoster() {
+    return this.systemSettingsService.getPublicHeaderRoster();
+  }
+
   @Public()
   @Get('first-message-delay')
   @ApiOperation({ summary: 'İlk mesaj gecikmesi ayarlarını getir (Public)' })

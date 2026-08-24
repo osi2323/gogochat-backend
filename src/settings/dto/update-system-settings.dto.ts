@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsArray,
   MaxLength,
   Min,
   ValidateIf,
@@ -197,6 +198,23 @@ export class UpdateSystemSettingsDto {
   @IsOptional()
   @IsString()
   homePageLogo?: string;
+
+  @ApiPropertyOptional({ description: 'Sohbet üst alan logosu (URL veya Data URL)' })
+  @IsOptional()
+  @IsString()
+  chatHeaderLogo?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Sıralı site sahibi kullanıcı adları' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  siteOwnerUsernames?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Sıralı yönetici kullanıcı adları' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  managerUsernames?: string[];
 
   @ApiPropertyOptional({ maxLength: 255 })
   @IsOptional()

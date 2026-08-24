@@ -128,6 +128,15 @@ export class SystemSettings {
   @Column({ type: 'text', nullable: true })
   homePageLogo?: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  chatHeaderLogo?: string | null;
+
+  @Column({ type: 'simple-json', nullable: true })
+  siteOwnerUsernames?: string[] | null;
+
+  @Column({ type: 'simple-json', nullable: true })
+  managerUsernames?: string[] | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   premiumArticleTopTitle?: string | null;
 

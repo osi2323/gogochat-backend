@@ -114,6 +114,15 @@ export class SystemSettingsResponseDto {
   @ApiProperty({ description: 'Ana sayfa logosu', nullable: true })
   homePageLogo?: string | null;
 
+  @ApiProperty({ description: 'Sohbet üst alan logosu', nullable: true })
+  chatHeaderLogo?: string | null;
+
+  @ApiProperty({ type: [String], description: 'Sıralı site sahibi kullanıcı adları' })
+  siteOwnerUsernames: string[];
+
+  @ApiProperty({ type: [String], description: 'Sıralı yönetici kullanıcı adları' })
+  managerUsernames: string[];
+
   @ApiProperty({ nullable: true })
   premiumArticleTopTitle?: string | null;
 
