@@ -129,6 +129,9 @@ export class RoomsService {
       throw new BadRequestException('Room is not editable');
     }
 
+    console.log('🔥 ROOM UPDATE DTO:', updateRoomDto);
+    console.log('🔥 GELEN OWNER NAME:', updateRoomDto.ownerName);
+
     if (updateRoomDto.ownerName !== undefined) {
       const cleanedOwnerName = this.cleanString(updateRoomDto.ownerName);
 
@@ -138,6 +141,12 @@ export class RoomsService {
       } else {
         const resolvedOwner =
           await this.userService.findByUsernameCaseInsensitive(cleanedOwnerName);
+
+        console.log(
+          '🔥 BULUNAN OWNER:',
+          resolvedOwner?.id,
+          resolvedOwner?.username,
+        );
 
         if (!resolvedOwner || resolvedOwner.isGuest === true) {
           if (!options?.skipOwnerValidation) {
