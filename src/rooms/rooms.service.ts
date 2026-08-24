@@ -130,11 +130,29 @@ export class RoomsService {
     }
 
     if (updateRoomDto.ownerName !== undefined) {
-      const resolvedOwnerId = await this.resolveOwnerIdByName(
-        updateRoomDto.ownerName,
-        options?.skipOwnerValidation,
-      );
-      room.ownerId = resolvedOwnerId;
+      const cleanedOwnerName = this.cleanString(updateRoomDto.ownerName);
+
+      if (!cleanedOwnerName) {
+        room.ownerId = undefined;
+        room.owner = undefined;
+      } else {
+        const resolvedOwner =
+          await this.userService.findByUsernameCaseInsensitive(cleanedOwnerName);
+
+        if (!resolvedOwner || resolvedOwner.isGuest === true) {
+          if (!options?.skipOwnerValidation) {
+            throw new NotFoundException('Owner not found');
+          }
+        } else {
+          // ÖNEMLİ:
+          // Oda entity'si owner relation'ı ile birlikte yükleniyor.
+          // Sadece ownerId değiştirilirse eski room.owner (örn. root)
+          // TypeORM save sırasında tekrar ownerId'yi eski kullanıcıya çevirebilir.
+          // Bu yüzden ownerId ve owner relation'ını birlikte güncelliyoruz.
+          room.ownerId = resolvedOwner.id;
+          room.owner = resolvedOwner;
+        }
+      }
     }
 
     const maxUsers = updateRoomDto.maxUsers ?? room.maxUsers;
