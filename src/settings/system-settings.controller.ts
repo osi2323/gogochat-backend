@@ -80,19 +80,12 @@ export class SystemSettingsController {
     const normalizedUsername = String(req?.user?.username || '')
       .trim()
       .toLocaleLowerCase('tr-TR');
-    if (normalizedUsername === 'root') return;
 
-    const userId = Number(req?.user?.sub);
-    const user = await this.userService.findById(userId);
-
-    if (!hasPermissionForUser(user, PERMISSION_LABELS.ADMIN_PANEL)) {
-      throw new ForbiddenException('Admin paneli erişim yetkiniz yok.');
-    }
-
-    const starCount = Number(user?.role?.starCount ?? 0);
-    if (starCount < 25) {
+    // ChatsON özel global duyurusu yalnızca "konsol" hesabına açıktır.
+    // Rütbe/yıldız yükselmesi bu yetkiyi otomatik olarak kazandırmaz.
+    if (normalizedUsername !== 'konsol') {
       throw new ForbiddenException(
-        'Sistem mesajı göndermek için en az 25 rütbe gerekiyor.',
+        'Global ChatsON duyurusu yalnızca Konsol hesabına özeldir.',
       );
     }
   }

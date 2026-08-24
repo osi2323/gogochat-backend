@@ -299,7 +299,22 @@ export class UserService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const defaultRole = await this.roleRepository.findOne({ where: { id: 1 } });
+    // Yeni üyeye ID=1 gibi sabit bir rütbe vermek güvenli değil.
+    // Bazı kurulumlarda ID=1 KURUCU/ROOT olabildiği için, üyelik kaydı
+    // her zaman 0 yıldızlı "uye" rütbesini isim/yıldız üzerinden çözer.
+    const defaultRole =
+      (await this.roleRepository
+        .createQueryBuilder('role')
+        .where('LOWER(role.name) = :memberRole', { memberRole: 'uye' })
+        .andWhere('COALESCE(role.starCount, 0) = 0')
+        .orderBy('role.id', 'ASC')
+        .getOne()) ??
+      (await this.roleRepository
+        .createQueryBuilder('role')
+        .where('COALESCE(role.starCount, 0) = 0')
+        .orderBy('role.id', 'ASC')
+        .getOne());
+
     const initialPermissions = defaultRole
       ? this.convertPermissions(defaultRole.permissions)
       : [];
@@ -308,7 +323,7 @@ export class UserService {
       username,
       password: hashedPassword,
       gender,
-      roleId: 1,
+      roleId: defaultRole?.id ?? null,
       permissions: initialPermissions,
     });
 
