@@ -7785,7 +7785,7 @@ export class RoomsGateway
 
     if (
       requestedSeatIndex !== undefined &&
-      (requestedSeatIndex < 0 || requestedSeatIndex > 4)
+      requestedSeatIndex < 0
     ) {
       return { status: 'error', message: 'Invalid seat index' };
     }
@@ -7817,8 +7817,23 @@ export class RoomsGateway
       return { status: 'error', message: 'on_roof' };
     }
 
-    if (!member.isInVoiceSeat && this.getActiveVoiceSeatCount(roomMembers) >= 5) {
+    let microphoneLimit = 5;
+    try {
+      const roomEntity = await this.getRoomRepository()
+        ?.createQueryBuilder('room')
+        .where('LOWER(room.name) = :roomName', { roomName: normalizedRoom })
+        .orWhere('LOWER(room.voiceId) = :voiceId', { voiceId: normalizedRoom })
+        .getOne();
+      microphoneLimit = Math.max(1, Math.min(20, Number(roomEntity?.microphoneLimit ?? 5)));
+    } catch {
+      microphoneLimit = 5;
+    }
+
+    if (!member.isInVoiceSeat && this.getActiveVoiceSeatCount(roomMembers) >= microphoneLimit) {
       return { status: 'error', message: 'voice_seats_full' };
+    }
+    if (requestedSeatIndex !== undefined && requestedSeatIndex >= microphoneLimit) {
+      return { status: 'error', message: 'Invalid seat index' };
     }
 
     if (requestedSeatIndex !== undefined) {
@@ -8142,6 +8157,7 @@ export class RoomsGateway
       targetMember.voiceSeatIndex !== undefined;
 
     targetMember.isMuted = true;
+    targetMember.isInVoiceChat = false;
     targetMember.isInVoiceSeat = false;
     targetMember.voiceSeatJoinedAt = undefined;
     targetMember.voiceSeatIndex = undefined;
@@ -8201,6 +8217,7 @@ export class RoomsGateway
       room: normalizedRoom,
       username: targetMember.username,
       isMuted: true,
+      isInVoiceChat: false,
       isInVoiceSeat: false,
     };
   }

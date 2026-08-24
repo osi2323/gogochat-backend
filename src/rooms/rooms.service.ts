@@ -62,6 +62,7 @@ export class RoomsService {
       description: this.cleanString(createRoomDto.description),
       maxUsers: createRoomDto.maxUsers ?? 200,
       visibleUserCount: createRoomDto.visibleUserCount ?? 15,
+      microphoneLimit: Math.max(1, Math.min(20, Number(createRoomDto.microphoneLimit ?? 5))),
       isPrivate: createRoomDto.isPrivate ?? false,
       isEditable: true,
       password: this.resolvePassword(
@@ -174,6 +175,7 @@ export class RoomsService {
       this.cleanString(updateRoomDto.description) ?? room.description;
     room.maxUsers = maxUsers;
     room.visibleUserCount = visibleUserCount;
+    room.microphoneLimit = Math.max(1, Math.min(20, Number(updateRoomDto.microphoneLimit ?? room.microphoneLimit ?? 5)));
     room.isPrivate = updateRoomDto.isPrivate ?? room.isPrivate;
     if (updateRoomDto.isEditable !== undefined) {
       room.isEditable = updateRoomDto.isEditable;
@@ -278,6 +280,7 @@ export class RoomsService {
       description: room.description ?? null,
       maxUsers: room.maxUsers,
       visibleUserCount: room.visibleUserCount,
+      microphoneLimit: room.microphoneLimit ?? 5,
       isPrivate: room.isPrivate,
       isEditable: room.isEditable,
       radioPanelLink: room.radioPanelLink ?? null,

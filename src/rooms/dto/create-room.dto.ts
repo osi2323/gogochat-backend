@@ -45,6 +45,16 @@ export class CreateRoomDto {
   @Type(() => Number)
   visibleUserCount = 15;
 
+  @ApiPropertyOptional({
+    description: 'Aynı anda mikrofonda bulunabilecek kişi sayısı',
+    default: 5,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  microphoneLimit = 5;
+
   @ApiPropertyOptional({ description: 'Özel oda mı?', default: false })
   @IsOptional()
   @IsBoolean()

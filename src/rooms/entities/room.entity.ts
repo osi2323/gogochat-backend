@@ -38,6 +38,9 @@ export class Room {
   @Column({ type: 'int', default: 15 })
   visibleUserCount: number;
 
+  @Column({ type: 'int', default: 5 })
+  microphoneLimit: number;
+
   @Column({ type: 'boolean', default: false })
   isPrivate: boolean;
 

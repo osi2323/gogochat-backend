@@ -63,6 +63,9 @@ export class RoomResponseDto {
   visibleUserCount: number;
 
   @ApiProperty()
+  microphoneLimit: number;
+
+  @ApiProperty()
   isPrivate: boolean;
 
   @ApiProperty()
