@@ -701,8 +701,12 @@ export class RoomsService {
       return undefined;
     }
 
-    const owner = await this.userService.findByUsername(cleanedName);
-    if (!owner) {
+    // Oda sahibi kullanıcı adı büyük/küçük harfe duyarlı olmamalı.
+    // Misafir hesaplar oda sahibi olarak atanamaz.
+    const owner =
+      await this.userService.findByUsernameCaseInsensitive(cleanedName);
+
+    if (!owner || owner.isGuest === true) {
       if (skipOwnerValidation) {
         return undefined;
       }
