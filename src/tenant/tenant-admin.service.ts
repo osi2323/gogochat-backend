@@ -159,6 +159,7 @@ export class TenantAdminService {
       description: row.description ?? null,
       maxUsers: Number(row.maxusers ?? row.maxUsers),
       visibleUserCount: Number(row.visibleusercount ?? row.visibleUserCount),
+      microphoneLimit: Number(row.microphonelimit ?? row.microphoneLimit ?? 5),
       isPrivate: row.isprivate ?? row.isPrivate,
       radioPanelLink: row.radiopanellink ?? row.radioPanelLink ?? null,
       listOrder: Number(row.listorder ?? row.listOrder),
