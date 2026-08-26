@@ -7824,7 +7824,7 @@ export class RoomsGateway
         .where('LOWER(room.name) = :roomName', { roomName: normalizedRoom })
         .orWhere('LOWER(room.voiceId) = :voiceId', { voiceId: normalizedRoom })
         .getOne();
-      microphoneLimit = Math.max(0, Math.min(20, Number(roomEntity?.microphoneLimit ?? 5)));
+      microphoneLimit = Math.max(1, Math.min(20, Number(roomEntity?.microphoneLimit ?? 5)));
     } catch {
       microphoneLimit = 5;
     }

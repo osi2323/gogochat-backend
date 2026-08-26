@@ -51,9 +51,18 @@ export class CreateRoomDto {
   })
   @IsOptional()
   @IsInt()
-  @Min(0)
+  @Min(1)
   @Type(() => Number)
   microphoneLimit = 5;
+
+  @ApiPropertyOptional({
+    description: 'Mobil mikrofon sahnesi gizlensin mi?',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === true || value === 'true')
+  microphoneStageHidden = false;
 
   @ApiPropertyOptional({ description: 'Özel oda mı?', default: false })
   @IsOptional()

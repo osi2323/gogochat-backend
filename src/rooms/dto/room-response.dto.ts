@@ -66,6 +66,9 @@ export class RoomResponseDto {
   microphoneLimit: number;
 
   @ApiProperty()
+  microphoneStageHidden: boolean;
+
+  @ApiProperty()
   isPrivate: boolean;
 
   @ApiProperty()

@@ -42,6 +42,9 @@ export class Room {
   microphoneLimit: number;
 
   @Column({ type: 'boolean', default: false })
+  microphoneStageHidden: boolean;
+
+  @Column({ type: 'boolean', default: false })
   isPrivate: boolean;
 
   @Column({ type: 'varchar', nullable: true })
