@@ -584,6 +584,9 @@ export class RoomsGateway
   private visibilitySessionTableReady?: Promise<void>;
   private readonly sorubazGames = new Map<string, { answer: string; question: string; points: number; expiresAt: number }>();
   private readonly sorubazTimers = new Map<string, NodeJS.Timeout>();
+  private readonly wordHuntGames = new Map<string, { answer: string; scrambled: string; points: number; expiresAt: number }>();
+  private readonly duelGames = new Map<string, { challenger: RoomMember; expiresAt: number }>();
+  private readonly wordHuntWords = ['istanbul','merhaba','bilgisayar','arkadaş','sohbet','yıldız','oyuncu','vietnam','ankara','telefon','müzik','kahve'];
   private readonly sorubazQuestions = [
     { q: 'Türkiye’nin başkenti neresidir?', a: 'ankara', p: 10 },
     { q: 'Dünyanın en büyük okyanusu hangisidir?', a: 'pasifik', p: 10 },
@@ -6084,6 +6087,102 @@ export class RoomsGateway
     this.sorubazTimers.set(key, next);
   }
 
+  private async addWeeklyGameScore(member: RoomMember, game: string, points: number): Promise<void> {
+    if (!member.userId || member.isGuest === true) return;
+    await this.ensureSorubazScoreTable();
+    await this.dataSource.query(
+      `INSERT INTO "game_weekly_scores" ("userId","username","game","weekKey","points","wins") VALUES ($1,$2,$3,$4,$5,1) ON CONFLICT ("userId","game","weekKey") DO UPDATE SET "username"=EXCLUDED."username", "points"="game_weekly_scores"."points"+EXCLUDED."points", "wins"="game_weekly_scores"."wins"+1, "updatedAt"=now()`,
+      [member.userId, member.username, game, this.getGameWeekKey(), points],
+    );
+  }
+
+  private scrambleGameWord(word: string): string {
+    const chars = Array.from(word);
+    for (let i = chars.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    const mixed = chars.join('');
+    return mixed === word && word.length > 2 ? word.slice(1) + word[0] : mixed;
+  }
+
+  private async getGameSettings(): Promise<{ diceEnabled:boolean; wordHuntEnabled:boolean; duelEnabled:boolean; sorubazEnabled:boolean; wordHuntPoints:number; duelPoints:number }> {
+    try {
+      await this.dataSource.query(`CREATE TABLE IF NOT EXISTS "game_settings" ("id" integer PRIMARY KEY DEFAULT 1, "diceEnabled" boolean NOT NULL DEFAULT true, "wordHuntEnabled" boolean NOT NULL DEFAULT true, "duelEnabled" boolean NOT NULL DEFAULT true, "sorubazEnabled" boolean NOT NULL DEFAULT true, "wordHuntPoints" integer NOT NULL DEFAULT 10, "duelPoints" integer NOT NULL DEFAULT 15, "updatedAt" timestamptz NOT NULL DEFAULT now())`);
+      await this.dataSource.query(`INSERT INTO "game_settings" ("id") VALUES (1) ON CONFLICT ("id") DO NOTHING`);
+      const rows = await this.dataSource.query(`SELECT * FROM "game_settings" WHERE "id"=1`);
+      return rows[0];
+    } catch { return { diceEnabled:true, wordHuntEnabled:true, duelEnabled:true, sorubazEnabled:true, wordHuntPoints:10, duelPoints:15 }; }
+  }
+
+  @SubscribeMessage('game:wordhunt:start')
+  async handleWordHuntStart(@MessageBody() payload: { room?: string }, @ConnectedSocket() client: Socket) {
+    const settings = await this.getGameSettings();
+    if (!settings.wordHuntEnabled) return { status:'error', message:'game_disabled' };
+    const room = this.normalize(payload?.room);
+    const member = room ? Array.from(this.getRoomsStore().get(room)?.values() ?? []).find((item) => item.socketId === client.id) : undefined;
+    if (!room || !member) return { status: 'error', message: 'not_in_room' };
+    if (this.wordHuntGames.has(room)) return { status: 'error', message: 'already_running' };
+    const answer = this.wordHuntWords[Math.floor(Math.random() * this.wordHuntWords.length)];
+    const scrambled = this.scrambleGameWord(answer);
+    this.wordHuntGames.set(room, { answer: this.normalizeGameAnswer(answer), scrambled, points: settings.wordHuntPoints, expiresAt: Date.now() + 30000 });
+    this.server.to(room).emit('room:message', { type:'activity', activityType:'wordhunt-question', username:'Kelime Avı', content:`🔤 KELİME AVI • Harfleri çöz: ${scrambled.toUpperCase()}  (+${settings.wordHuntPoints} puan)`, message:`🔤 KELİME AVI • Harfleri çöz: ${scrambled.toUpperCase()}  (+${settings.wordHuntPoints} puan)`, createdAt:new Date().toISOString() });
+    setTimeout(() => {
+      const active = this.wordHuntGames.get(room);
+      if (active && Date.now() >= active.expiresAt) {
+        this.wordHuntGames.delete(room);
+        this.server.to(room).emit('room:message', { type:'activity', activityType:'wordhunt-timeout', username:'Kelime Avı', content:`⏱️ Kelime Avı bitti. Cevap: ${active.answer}`, message:`⏱️ Kelime Avı bitti. Cevap: ${active.answer}`, createdAt:new Date().toISOString() });
+      }
+    }, 30500);
+    return { status:'ok' };
+  }
+
+  @SubscribeMessage('game:duel:start')
+  async handleDuelStart(@MessageBody() payload: { room?: string }, @ConnectedSocket() client: Socket) {
+    const settings = await this.getGameSettings();
+    if (!settings.duelEnabled) return { status:'error', message:'game_disabled' };
+    const room = this.normalize(payload?.room);
+    const member = room ? Array.from(this.getRoomsStore().get(room)?.values() ?? []).find((item) => item.socketId === client.id) : undefined;
+    if (!room || !member) return { status:'error', message:'not_in_room' };
+    if (this.duelGames.has(room)) return { status:'error', message:'already_running' };
+    this.duelGames.set(room, { challenger: member, expiresAt: Date.now() + 30000 });
+    const display = this.getDisplayUsername(member);
+    this.server.to(room).emit('room:message', { type:'activity', activityType:'duel-open', username:'Düello', content:`⚔️ ${display} düello başlattı! Katılmak için 30 saniye içinde “kabul” yaz.`, message:`⚔️ ${display} düello başlattı! Katılmak için 30 saniye içinde “kabul” yaz.`, createdAt:new Date().toISOString() });
+    setTimeout(() => {
+      const duel = this.duelGames.get(room);
+      if (duel && Date.now() >= duel.expiresAt) {
+        this.duelGames.delete(room);
+        this.server.to(room).emit('room:message', { type:'activity', activityType:'duel-timeout', username:'Düello', content:'⌛ Düello davetinin süresi doldu.', message:'⌛ Düello davetinin süresi doldu.', createdAt:new Date().toISOString() });
+      }
+    }, 30500);
+    return { status:'ok' };
+  }
+
+  private async evaluateExtraGames(room: string, member: RoomMember, message: string): Promise<void> {
+    const key = this.normalize(room);
+    if (!key) return;
+    const normalized = this.normalizeGameAnswer(message);
+    const wordGame = this.wordHuntGames.get(key);
+    if (wordGame && Date.now() <= wordGame.expiresAt && normalized === wordGame.answer) {
+      this.wordHuntGames.delete(key);
+      const display = this.getDisplayUsername(member);
+      this.server.to(key).emit('room:message', { type:'activity', activityType:'wordhunt-win', username:'Kelime Avı', content:`🏆 ${display} kelimeyi buldu! +${wordGame.points} puan`, message:`🏆 ${display} kelimeyi buldu! +${wordGame.points} puan`, createdAt:new Date().toISOString() });
+      try { await this.addWeeklyGameScore(member, 'wordhunt', wordGame.points); } catch (error) { this.logWarn(`Word hunt score failed: ${error instanceof Error ? error.message : String(error)}`); }
+    }
+    const duel = this.duelGames.get(key);
+    if (duel && Date.now() <= duel.expiresAt && normalized === 'kabul' && duel.challenger.socketId !== member.socketId) {
+      this.duelGames.delete(key);
+      const a = Math.floor(Math.random()*100)+1;
+      const b = Math.floor(Math.random()*100)+1;
+      const winner = a >= b ? duel.challenger : member;
+      const loser = a >= b ? member : duel.challenger;
+      const winnerScore = a >= b ? a : b;
+      const loserScore = a >= b ? b : a;
+      this.server.to(key).emit('room:message', { type:'activity', activityType:'duel-result', username:'Düello', content:`⚔️ ${this.getDisplayUsername(duel.challenger)} ${a} — ${b} ${this.getDisplayUsername(member)} • 🏆 ${this.getDisplayUsername(winner)} kazandı!`, message:`⚔️ ${this.getDisplayUsername(duel.challenger)} ${a} — ${b} ${this.getDisplayUsername(member)} • 🏆 ${this.getDisplayUsername(winner)} kazandı!`, createdAt:new Date().toISOString(), winner: winner.username, winnerScore, loser: loser.username, loserScore });
+      try { const settings = await this.getGameSettings(); await this.addWeeklyGameScore(winner, 'duel', settings.duelPoints); } catch (error) { this.logWarn(`Duel score failed: ${error instanceof Error ? error.message : String(error)}`); }
+    }
+  }
+
   @SubscribeMessage('game:leaderboard:get')
   async handleGameLeaderboard(@MessageBody() payload: { room?: string }) {
     const room = this.normalize(payload?.room);
@@ -6092,13 +6191,15 @@ export class RoomsGateway
   }
 
   @SubscribeMessage('room:dice:roll')
-  handleDiceRoll(
+  async handleDiceRoll(
     @MessageBody() payload: { room?: string; username?: string },
     @ConnectedSocket() client: Socket,
   ) {
     const room = this.normalize(payload?.room);
     const username = String(payload?.username || '').trim();
     if (!room || !username) return { status: 'error', message: 'invalid_payload' };
+    const settings = await this.getGameSettings();
+    if (!settings.diceEnabled) return { status:'error', message:'game_disabled' };
 
     // Do not trust a client supplied result: the server always rolls the die.
     const value = Math.floor(Math.random() * 6) + 1;
@@ -6269,6 +6370,7 @@ export class RoomsGateway
     }
 
     void this.evaluateSorubazAnswer(normalizedRoom, member, processedMessage);
+    void this.evaluateExtraGames(normalizedRoom, member, processedMessage);
 
     return {
       status: 'ok',

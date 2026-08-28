@@ -24,6 +24,8 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { RoomsService } from './rooms.service';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { RoomResponseDto } from './dto/room-response.dto';
@@ -52,6 +54,7 @@ export class RoomsController {
   constructor(
     private readonly roomsService: RoomsService,
     private readonly userService: UserService,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   private async getPermissionContext(req: any): Promise<{
@@ -148,6 +151,35 @@ export class RoomsController {
       'radioRequestLink',
     );
     return hasPanelChange || hasRequestChange;
+  }
+
+  private async ensureGameSettingsTable(): Promise<void> {
+    await this.dataSource.query(`CREATE TABLE IF NOT EXISTS "game_settings" ("id" integer PRIMARY KEY DEFAULT 1, "diceEnabled" boolean NOT NULL DEFAULT true, "wordHuntEnabled" boolean NOT NULL DEFAULT true, "duelEnabled" boolean NOT NULL DEFAULT true, "sorubazEnabled" boolean NOT NULL DEFAULT true, "wordHuntPoints" integer NOT NULL DEFAULT 10, "duelPoints" integer NOT NULL DEFAULT 15, "updatedAt" timestamptz NOT NULL DEFAULT now())`);
+    await this.dataSource.query(`INSERT INTO "game_settings" ("id") VALUES (1) ON CONFLICT ("id") DO NOTHING`);
+  }
+
+  @Get('game-settings')
+  @UseGuards(AuthGuard)
+  async getGameSettings(@Request() req: any) {
+    const context = await this.getPermissionContext(req);
+    this.ensureRoomManagementPermission(context);
+    await this.ensureGameSettingsTable();
+    const rows = await this.dataSource.query(`SELECT * FROM "game_settings" WHERE "id"=1`);
+    return rows[0];
+  }
+
+  @Patch('game-settings')
+  @UseGuards(AuthGuard)
+  async updateGameSettings(@Request() req: any, @Body() body: Record<string, unknown>) {
+    const context = await this.getPermissionContext(req);
+    this.ensureRoomManagementPermission(context);
+    await this.ensureGameSettingsTable();
+    const currentRows = await this.dataSource.query(`SELECT * FROM "game_settings" WHERE "id"=1`);
+    const current = currentRows[0] || {};
+    const bool = (key: string) => typeof body[key] === 'boolean' ? body[key] : current[key];
+    const num = (key: string, fallback: number) => Number.isFinite(Number(body[key])) ? Math.max(1, Math.min(100, Number(body[key]))) : Number(current[key] ?? fallback);
+    const rows = await this.dataSource.query(`UPDATE "game_settings" SET "diceEnabled"=$1,"wordHuntEnabled"=$2,"duelEnabled"=$3,"sorubazEnabled"=$4,"wordHuntPoints"=$5,"duelPoints"=$6,"updatedAt"=now() WHERE "id"=1 RETURNING *`, [bool('diceEnabled'),bool('wordHuntEnabled'),bool('duelEnabled'),bool('sorubazEnabled'),num('wordHuntPoints',10),num('duelPoints',15)]);
+    return rows[0];
   }
 
   @Get()
