@@ -582,6 +582,18 @@ export class RoomsGateway
   }> = [];
   private roleHydrationRepositoryWarned = false;
   private visibilitySessionTableReady?: Promise<void>;
+  private readonly sorubazGames = new Map<string, { answer: string; question: string; points: number; expiresAt: number }>();
+  private readonly sorubazTimers = new Map<string, NodeJS.Timeout>();
+  private readonly sorubazQuestions = [
+    { q: 'Türkiye’nin başkenti neresidir?', a: 'ankara', p: 10 },
+    { q: 'Dünyanın en büyük okyanusu hangisidir?', a: 'pasifik', p: 10 },
+    { q: '5 × 8 kaçtır?', a: '40', p: 8 },
+    { q: 'Ay’a ilk ayak basan insanın soyadı nedir?', a: 'armstrong', p: 15 },
+    { q: 'İstanbul hangi iki kıta üzerinde yer alır?', a: 'avrupa asya', p: 15 },
+    { q: 'Suyun kimyasal formülü nedir?', a: 'h2o', p: 10 },
+    { q: 'Bir yılda kaç ay vardır?', a: '12', p: 5 },
+    { q: 'Vietnam’ın başkenti neresidir?', a: 'hanoi', p: 10 },
+  ];
 
   @InjectRepository(User)
   private readonly injectedUserRepository?: Repository<User>;
@@ -3030,18 +3042,13 @@ export class RoomsGateway
     const botRepository = this.getBotRepository();
     if (!botRepository) return null;
 
-    const lobbyRoomKey = await this.resolveCanonicalLobbyRoomKey();
-    if (this.normalize(lobbyRoomKey) !== normalizedRoom) return null;
-
-    const aiBot = await botRepository.findOne({ where: { isAI: true } });
-    const welcomeTemplate = aiBot?.welcomeMessage?.trim();
-    if (!aiBot || !welcomeTemplate) return null;
+    const aiBots = await botRepository.find({ where: { isAI: true } });
+    const aiBot = aiBots.find((candidate) => {
+      if (!candidate.welcomeMessage?.trim()) return false;
+      return this.normalize(candidate.room ?? undefined) === normalizedRoom;
+    });
+    if (!aiBot) return null;
     if (this.normalize(aiBot.username) === normalizedUsername) return null;
-
-    const botRoomKey = await this.resolvePersistentBotRoomKey(aiBot.room);
-    if (this.normalize(botRoomKey ?? undefined) !== this.normalize(lobbyRoomKey)) {
-      return null;
-    }
 
     return { bot: aiBot, normalizedRoom, normalizedUsername };
   }
@@ -4012,6 +4019,8 @@ export class RoomsGateway
       joinedUser: trimmedUsername,
       roomMembers: this.summarizeRoomMembers(canonicalRoomKey),
     });
+
+    this.startSorubazIfNeeded(canonicalRoomKey);
 
     return {
       status: 'ok',
@@ -5948,6 +5957,142 @@ export class RoomsGateway
     return { status: 'ok', inviteId, accepted };
   }
 
+  private normalizeGameAnswer(value: string): string {
+    return String(value || '')
+      .toLocaleLowerCase('tr-TR')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9çğıöşü\s]/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private async ensureSorubazScoreTable(): Promise<void> {
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS "game_weekly_scores" (
+        "id" BIGSERIAL PRIMARY KEY,
+        "userId" integer NOT NULL,
+        "username" varchar(120) NOT NULL,
+        "game" varchar(40) NOT NULL DEFAULT 'sorubaz',
+        "weekKey" varchar(16) NOT NULL,
+        "points" integer NOT NULL DEFAULT 0,
+        "wins" integer NOT NULL DEFAULT 0,
+        "updatedAt" timestamptz NOT NULL DEFAULT now(),
+        UNIQUE ("userId", "game", "weekKey")
+      )
+    `);
+  }
+
+  private getGameWeekKey(): string {
+    const now = new Date();
+    const first = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+    const day = Math.floor((now.getTime() - first.getTime()) / 86400000);
+    return `${now.getUTCFullYear()}-W${String(Math.ceil((day + first.getUTCDay() + 1) / 7)).padStart(2, '0')}`;
+  }
+
+  private async emitSorubazLeaderboard(room: string): Promise<void> {
+    try {
+      await this.ensureSorubazScoreTable();
+      const rows = await this.dataSource.query(
+        `SELECT "username", "points", "wins" FROM "game_weekly_scores" WHERE "game"='sorubaz' AND "weekKey"=$1 ORDER BY "points" DESC, "wins" DESC LIMIT 10`,
+        [this.getGameWeekKey()],
+      );
+      this.server.to(room).emit('game:leaderboard', { game: 'sorubaz', weekKey: this.getGameWeekKey(), rows });
+    } catch (error) {
+      this.logWarn(`Sorubaz leaderboard failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private startSorubazIfNeeded(room: string): void {
+    const normalizedKey = this.normalize(room);
+    if (!normalizedKey || (!normalizedKey.includes('sorubaz') && !normalizedKey.includes('soru-cevap') && !normalizedKey.includes('soru cevap'))) return;
+    const key: string = normalizedKey;
+    void this.emitSorubazLeaderboard(key);
+    if (this.sorubazTimers.has(key) || this.sorubazGames.has(key)) return;
+    const ask = () => {
+      const q = this.sorubazQuestions[Math.floor(Math.random() * this.sorubazQuestions.length)];
+      this.sorubazGames.set(key, { answer: this.normalizeGameAnswer(q.a), question: q.q, points: q.p, expiresAt: Date.now() + 20000 });
+      this.server.to(key).emit('room:message', {
+        id: `sorubaz-${Date.now()}`,
+        type: 'activity', activityType: 'sorubaz-question', username: 'Sorubaz',
+        content: `🧠 SORUBAZ • ${q.q}  (+${q.p} puan)`, message: `🧠 SORUBAZ • ${q.q}  (+${q.p} puan)`,
+        createdAt: new Date().toISOString(),
+      });
+      const timer = setTimeout(() => {
+        const active = this.sorubazGames.get(key);
+        if (active) {
+          this.server.to(key).emit('room:message', { type: 'activity', activityType: 'sorubaz-timeout', username: 'Sorubaz', content: `⏱️ Süre doldu. Doğru cevap: ${active.answer}`, message: `⏱️ Süre doldu. Doğru cevap: ${active.answer}`, createdAt: new Date().toISOString() });
+          this.sorubazGames.delete(key);
+        }
+        const next = setTimeout(ask, 8000);
+        this.sorubazTimers.set(key, next);
+      }, 20000);
+      this.sorubazTimers.set(key, timer);
+    };
+    const first = setTimeout(ask, 2500);
+    this.sorubazTimers.set(key, first);
+  }
+
+  private async evaluateSorubazAnswer(room: string, member: RoomMember, message: string): Promise<void> {
+    const normalizedKey = this.normalize(room);
+    if (!normalizedKey) return;
+    const key: string = normalizedKey;
+    const game = this.sorubazGames.get(key);
+    if (!game || Date.now() > game.expiresAt) return;
+    if (this.normalizeGameAnswer(message) !== game.answer) return;
+    this.sorubazGames.delete(key);
+    const timer = this.sorubazTimers.get(key);
+    if (timer) clearTimeout(timer);
+    this.sorubazTimers.delete(key);
+    const display = this.getDisplayUsername(member);
+    this.server.to(key).emit('room:message', { type: 'activity', activityType: 'sorubaz-win', username: 'Sorubaz', content: `🎉 ${display} doğru bildi! +${game.points} puan`, message: `🎉 ${display} doğru bildi! +${game.points} puan`, createdAt: new Date().toISOString() });
+    // Guests may play and win the round, but only registered users enter the weekly table.
+    if (member.userId && member.isGuest !== true) {
+      try {
+        await this.ensureSorubazScoreTable();
+        await this.dataSource.query(
+          `INSERT INTO "game_weekly_scores" ("userId","username","game","weekKey","points","wins") VALUES ($1,$2,'sorubaz',$3,$4,1) ON CONFLICT ("userId","game","weekKey") DO UPDATE SET "username"=EXCLUDED."username", "points"="game_weekly_scores"."points"+EXCLUDED."points", "wins"="game_weekly_scores"."wins"+1, "updatedAt"=now()`,
+          [member.userId, member.username, this.getGameWeekKey(), game.points],
+        );
+        await this.emitSorubazLeaderboard(key);
+      } catch (error) { this.logWarn(`Sorubaz score failed: ${error instanceof Error ? error.message : String(error)}`); }
+    }
+    const next = setTimeout(() => { this.sorubazTimers.delete(key); this.startSorubazIfNeeded(key); }, 8000);
+    this.sorubazTimers.set(key, next);
+  }
+
+  @SubscribeMessage('game:leaderboard:get')
+  async handleGameLeaderboard(@MessageBody() payload: { room?: string }) {
+    const room = this.normalize(payload?.room);
+    if (room) await this.emitSorubazLeaderboard(room);
+    return { status: 'ok' };
+  }
+
+  @SubscribeMessage('room:dice:roll')
+  handleDiceRoll(
+    @MessageBody() payload: { room?: string; username?: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const room = this.normalize(payload?.room);
+    const username = String(payload?.username || '').trim();
+    if (!room || !username) return { status: 'error', message: 'invalid_payload' };
+
+    // Do not trust a client supplied result: the server always rolls the die.
+    const value = Math.floor(Math.random() * 6) + 1;
+    const event = {
+      id: `dice-${Date.now()}-${client.id}`,
+      type: 'activity',
+      activityType: 'dice',
+      username,
+      message: `🎲 ${username} zar attı: ${value}`,
+      content: `🎲 ${username} zar attı: ${value}`,
+      diceValue: value,
+      createdAt: new Date().toISOString(),
+    };
+    this.server.to(room).emit('room:message', event);
+    return { status: 'ok', value };
+  }
+
   @SubscribeMessage('sendMessage')
   async handleMessage(
     @MessageBody() payload: SendMessagePayload,
@@ -6099,6 +6244,8 @@ export class RoomsGateway
 
       this.server.to(normalizedRoom).emit('room:message', messagePayload);
     }
+
+    void this.evaluateSorubazAnswer(normalizedRoom, member, processedMessage);
 
     return {
       status: 'ok',
