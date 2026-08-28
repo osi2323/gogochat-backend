@@ -5135,19 +5135,38 @@ export class RoomsGateway
       return { status: 'error', message: 'sender_not_found' };
     }
 
-    // Find target user across all rooms
+    const senderUsername = senderInfo.username || (client as any).username || '';
+    const senderIsRoot = senderUsername.toLowerCase() === 'root';
+    const senderTenantId = senderInfo.tenantId || 'tenant_master';
+
+    if (!senderIsRoot) {
+      const hasTeleportPermission = await this.hasPermissionByUsername(
+        senderUsername,
+        PERMISSION_LABELS.ROOM_TELEPORT,
+      );
+      if (!hasTeleportPermission) {
+        return { status: 'error', message: 'missing_permission' };
+      }
+    }
+
+    if (this.normalize(senderUsername) === normalizedTargetUsername) {
+      return { status: 'error', message: 'self_target' };
+    }
+
+    // Find target user only inside the sender tenant.
     let targetInfo: any = null;
     let targetSocketId: string | null = null;
     let targetCurrentRoomKey: string | null = null;
 
     for (const [roomKey, members] of this.getRoomsStore().entries()) {
       for (const [usernameKey, info] of members.entries()) {
-        if (usernameKey === normalizedTargetUsername) {
-          targetInfo = info;
-          targetSocketId = info.socketId;
-          targetCurrentRoomKey = roomKey;
-          break;
-        }
+        if (usernameKey !== normalizedTargetUsername) continue;
+        if ((info.tenantId || 'tenant_master') !== senderTenantId) continue;
+        if (!this.server?.sockets?.sockets?.has(info.socketId)) continue;
+        targetInfo = info;
+        targetSocketId = info.socketId;
+        targetCurrentRoomKey = roomKey;
+        break;
       }
       if (targetInfo) break;
     }
@@ -5162,9 +5181,13 @@ export class RoomsGateway
 
     if (
       senderStars <= targetStars &&
-      senderInfo.username?.toLowerCase() !== 'root'
+      !senderIsRoot
     ) {
       return { status: 'error', message: 'insufficient_privileges' };
+    }
+
+    if (this.normalize(targetCurrentRoomKey ?? undefined) === this.normalize(roomName)) {
+      return { status: 'error', message: 'same_room' };
     }
 
     const persistedUser = await this.findPersistedUserByUsername(
@@ -5173,7 +5196,7 @@ export class RoomsGateway
     if (
       isProtectedActionBlocked({
         actorStarCount: senderStars,
-        isRoot: senderInfo.username?.toLowerCase() === 'root',
+        isRoot: senderIsRoot,
         targetProtection: persistedUser?.protection,
         targetProtectedByStarCount: persistedUser?.protectedByStarCount,
       })
@@ -5213,6 +5236,8 @@ export class RoomsGateway
     // Emit teleport event to the target user
     this.server.to(targetSocketId).emit('room:teleport', {
       toRoom: roomName,
+      roomName,
+      source: 'teleport',
       byWhom: this.getDisplayUsername(senderInfo),
     });
 
@@ -5220,7 +5245,7 @@ export class RoomsGateway
       `User ${targetInfo.username} teleported to ${roomName} by ${senderInfo.username}`,
     );
 
-    return { status: 'ok' };
+    return { status: 'ok', roomName, targetUsername: targetInfo.username };
   }
 
   @SubscribeMessage('moderation:userInfo:request')
@@ -6004,9 +6029,8 @@ export class RoomsGateway
   }
 
   private startSorubazIfNeeded(room: string): void {
-    const normalizedKey = this.normalize(room);
-    if (!normalizedKey || (!normalizedKey.includes('sorubaz') && !normalizedKey.includes('soru-cevap') && !normalizedKey.includes('soru cevap'))) return;
-    const key: string = normalizedKey;
+    const key = this.normalize(room);
+    if (!key || (!key.includes('sorubaz') && !key.includes('soru-cevap') && !key.includes('soru cevap'))) return;
     void this.emitSorubazLeaderboard(key);
     if (this.sorubazTimers.has(key) || this.sorubazGames.has(key)) return;
     const ask = () => {
@@ -6034,9 +6058,8 @@ export class RoomsGateway
   }
 
   private async evaluateSorubazAnswer(room: string, member: RoomMember, message: string): Promise<void> {
-    const normalizedKey = this.normalize(room);
-    if (!normalizedKey) return;
-    const key: string = normalizedKey;
+    const key = this.normalize(room);
+    if (!key) return;
     const game = this.sorubazGames.get(key);
     if (!game || Date.now() > game.expiresAt) return;
     if (this.normalizeGameAnswer(message) !== game.answer) return;

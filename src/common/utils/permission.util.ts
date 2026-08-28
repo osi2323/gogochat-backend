@@ -35,6 +35,7 @@ export const PERMISSION_LABELS = {
   PERMISSION_GRANT: 'Yetki Verebilir',
   MICROPHONE_INVITE: 'Mikrofon Daveti',
   PRIVATE_CALL: 'Özel Arama',
+  ROOM_TELEPORT: 'Odaya Işınlama',
 } as const;
 
 const normalizePermissionLabel = (value?: string | null): string =>
