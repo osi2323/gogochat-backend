@@ -245,6 +245,8 @@ export class BackupService {
             maxUserCount: systemSettings.maxUserCount,
             maintenanceMode: systemSettings.maintenanceMode,
             showMicrophonesOnMobile: systemSettings.showMicrophonesOnMobile,
+            mobileHeaderColor: systemSettings.mobileHeaderColor,
+            mobileFooterColor: systemSettings.mobileFooterColor,
             homePageImage: systemSettings.homePageImage,
             homePageLogo: systemSettings.homePageLogo,
           }

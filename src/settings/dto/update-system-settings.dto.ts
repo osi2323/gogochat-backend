@@ -187,6 +187,18 @@ export class UpdateSystemSettingsDto {
   @IsBoolean()
   showMicrophonesOnMobile?: boolean;
 
+  @ApiPropertyOptional({ description: 'Mobil sohbet üst şerit rengi', example: '#0057B8', maxLength: 20 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  mobileHeaderColor?: string;
+
+  @ApiPropertyOptional({ description: 'Mobil sohbet alt şerit rengi', example: '#0057B8', maxLength: 20 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  mobileFooterColor?: string;
+
   @ApiPropertyOptional({
     description: 'Ana sayfa arka plan resmi (URL veya Data URL)',
   })

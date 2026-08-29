@@ -108,6 +108,12 @@ export class SystemSettingsResponseDto {
   @ApiProperty({ description: 'Mobil cihazlarda mikrofonları göster' })
   showMicrophonesOnMobile: boolean;
 
+  @ApiProperty({ description: 'Mobil sohbet üst şerit rengi', example: '#0057B8' })
+  mobileHeaderColor: string;
+
+  @ApiProperty({ description: 'Mobil sohbet alt şerit rengi', example: '#0057B8' })
+  mobileFooterColor: string;
+
   @ApiProperty({ description: 'Ana sayfa arka plan resmi', nullable: true })
   homePageImage?: string | null;
 

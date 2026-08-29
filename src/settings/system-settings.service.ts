@@ -116,6 +116,8 @@ export class SystemSettingsService {
   async getPublicHeaderRoster(): Promise<{
     chatHeaderLogo: string | null;
     siteName: string | null;
+    mobileHeaderColor: string;
+    mobileFooterColor: string;
     siteOwners: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
     managers: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
   }> {
@@ -128,6 +130,8 @@ export class SystemSettingsService {
       return {
         chatHeaderLogo: settings.chatHeaderLogo ?? null,
         siteName: settings.siteName ?? null,
+        mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
+        mobileFooterColor: settings.mobileFooterColor || '#0057B8',
         siteOwners: [],
         managers: [],
       };
@@ -162,6 +166,8 @@ export class SystemSettingsService {
     return {
       chatHeaderLogo: settings.chatHeaderLogo ?? null,
       siteName: settings.siteName ?? null,
+      mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
+      mobileFooterColor: settings.mobileFooterColor || '#0057B8',
       siteOwners: mapNames(ownerNames),
       managers: mapNames(managerNames),
     };
@@ -691,6 +697,8 @@ export class SystemSettingsService {
     this.roomsGateway.emitTenantSettingsUpdated({
       scope: 'system',
       showMicrophonesOnMobile: saved.showMicrophonesOnMobile !== false,
+      mobileHeaderColor: saved.mobileHeaderColor || '#0057B8',
+      mobileFooterColor: saved.mobileFooterColor || '#0057B8',
       communicationPermissions: {
         guestCanWrite: Boolean(saved.guestCanWrite),
         memberAndGuestMicDurationSeconds:
@@ -928,6 +936,8 @@ export class SystemSettingsService {
       maxUserCount: settings.maxUserCount,
       maintenanceMode: settings.maintenanceMode,
       showMicrophonesOnMobile: settings.showMicrophonesOnMobile,
+      mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
+      mobileFooterColor: settings.mobileFooterColor || '#0057B8',
       homePageImage: settings.homePageImage ?? null,
       homePageLogo: settings.homePageLogo ?? null,
       chatHeaderLogo: settings.chatHeaderLogo ?? null,

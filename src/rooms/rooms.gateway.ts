@@ -1890,6 +1890,8 @@ export class RoomsGateway
   emitTenantSettingsUpdated(payload: {
     scope: 'system' | 'security';
     showMicrophonesOnMobile?: boolean;
+    mobileHeaderColor?: string;
+    mobileFooterColor?: string;
     communicationPermissions?: {
       guestCanWrite: boolean;
       memberAndGuestMicDurationSeconds: number;

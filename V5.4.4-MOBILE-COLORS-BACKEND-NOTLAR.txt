@@ -1,0 +1,10 @@
+ChatsON V5.4.4 Backend
+
+Yeni system_settings alanlari:
+- mobileHeaderColor (default #0057B8)
+- mobileFooterColor (default #0057B8)
+
+Supabase migration bu calisma sirasinda canli projeye uygulandi.
+Web Console bu alanlari /system-settings uzerinden kaydeder.
+Public header roster response renkleri mobil chat istemcisine iletir.
+Socket tenant:settingsUpdated ile renkler acik istemcilerde de canli yenilenir.

@@ -122,6 +122,12 @@ export class SystemSettings {
   @Column({ default: true })
   showMicrophonesOnMobile: boolean;
 
+  @Column({ type: 'varchar', length: 20, default: '#0057B8' })
+  mobileHeaderColor: string;
+
+  @Column({ type: 'varchar', length: 20, default: '#0057B8' })
+  mobileFooterColor: string;
+
   @Column({ type: 'text', nullable: true })
   homePageImage?: string | null;
 
