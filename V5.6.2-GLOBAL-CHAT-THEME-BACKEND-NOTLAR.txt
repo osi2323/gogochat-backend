@@ -1,0 +1,5 @@
+ChatsON V5.6.2 Backend
+- system_settings.chatSiteTheme eklendi (dark/light/glass/neon).
+- Public header roster response temayi frontend'e gonderir.
+- Web Console kaydinda tema tenant:settingsUpdated ile tum aktif kullanicilara yayilir.
+- Migration: 20260830143000-add-chat-site-theme.ts

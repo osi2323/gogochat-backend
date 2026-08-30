@@ -114,6 +114,9 @@ export class SystemSettingsResponseDto {
   @ApiProperty({ description: 'Mobil sohbet alt şerit rengi', example: '#0057B8' })
   mobileFooterColor: string;
 
+  @ApiProperty({ description: 'Site sohbet teması', example: 'glass' })
+  chatSiteTheme: string;
+
   @ApiProperty({ description: 'Ana sayfa arka plan resmi', nullable: true })
   homePageImage?: string | null;
 

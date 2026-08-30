@@ -199,6 +199,12 @@ export class UpdateSystemSettingsDto {
   @MaxLength(20)
   mobileFooterColor?: string;
 
+  @ApiPropertyOptional({ description: 'Site sohbet teması', enum: ['dark', 'light', 'glass', 'neon'] })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  chatSiteTheme?: string;
+
   @ApiPropertyOptional({
     description: 'Ana sayfa arka plan resmi (URL veya Data URL)',
   })

@@ -1892,6 +1892,7 @@ export class RoomsGateway
     showMicrophonesOnMobile?: boolean;
     mobileHeaderColor?: string;
     mobileFooterColor?: string;
+    chatSiteTheme?: string;
     communicationPermissions?: {
       guestCanWrite: boolean;
       memberAndGuestMicDurationSeconds: number;

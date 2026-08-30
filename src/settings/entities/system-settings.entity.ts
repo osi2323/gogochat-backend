@@ -128,6 +128,9 @@ export class SystemSettings {
   @Column({ type: 'varchar', length: 20, default: '#0057B8' })
   mobileFooterColor: string;
 
+  @Column({ type: 'varchar', length: 20, default: 'dark' })
+  chatSiteTheme: string;
+
   @Column({ type: 'text', nullable: true })
   homePageImage?: string | null;
 

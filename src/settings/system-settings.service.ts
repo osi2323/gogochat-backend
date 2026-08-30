@@ -118,6 +118,7 @@ export class SystemSettingsService {
     siteName: string | null;
     mobileHeaderColor: string;
     mobileFooterColor: string;
+    chatSiteTheme: string;
     siteOwners: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
     managers: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
   }> {
@@ -132,6 +133,7 @@ export class SystemSettingsService {
         siteName: settings.siteName ?? null,
         mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
         mobileFooterColor: settings.mobileFooterColor || '#0057B8',
+        chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(settings.chatSiteTheme) ? settings.chatSiteTheme : 'dark',
         siteOwners: [],
         managers: [],
       };
@@ -168,6 +170,7 @@ export class SystemSettingsService {
       siteName: settings.siteName ?? null,
       mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
       mobileFooterColor: settings.mobileFooterColor || '#0057B8',
+      chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(settings.chatSiteTheme) ? settings.chatSiteTheme : 'dark',
       siteOwners: mapNames(ownerNames),
       managers: mapNames(managerNames),
     };
@@ -699,6 +702,7 @@ export class SystemSettingsService {
       showMicrophonesOnMobile: saved.showMicrophonesOnMobile !== false,
       mobileHeaderColor: saved.mobileHeaderColor || '#0057B8',
       mobileFooterColor: saved.mobileFooterColor || '#0057B8',
+      chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(saved.chatSiteTheme) ? saved.chatSiteTheme : 'dark',
       communicationPermissions: {
         guestCanWrite: Boolean(saved.guestCanWrite),
         memberAndGuestMicDurationSeconds:
@@ -938,6 +942,7 @@ export class SystemSettingsService {
       showMicrophonesOnMobile: settings.showMicrophonesOnMobile,
       mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
       mobileFooterColor: settings.mobileFooterColor || '#0057B8',
+      chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(settings.chatSiteTheme) ? settings.chatSiteTheme : 'dark',
       homePageImage: settings.homePageImage ?? null,
       homePageLogo: settings.homePageLogo ?? null,
       chatHeaderLogo: settings.chatHeaderLogo ?? null,

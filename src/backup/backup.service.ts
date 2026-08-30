@@ -247,6 +247,7 @@ export class BackupService {
             showMicrophonesOnMobile: systemSettings.showMicrophonesOnMobile,
             mobileHeaderColor: systemSettings.mobileHeaderColor,
             mobileFooterColor: systemSettings.mobileFooterColor,
+            chatSiteTheme: systemSettings.chatSiteTheme,
             homePageImage: systemSettings.homePageImage,
             homePageLogo: systemSettings.homePageLogo,
           }
