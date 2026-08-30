@@ -1,0 +1,5 @@
+ChatsON V5.6.14 — LiveKit Backend
+
+- /rooms/livekit-token artık { token, url } döndürür.
+- LIVEKIT_URL/API_KEY/API_SECRET eksikse açık yapılandırma hatası verir.
+- API Secret yalnız backend environment'ta kalır.

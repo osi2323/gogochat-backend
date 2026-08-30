@@ -256,7 +256,7 @@ export class RoomsController {
     @Query('room') room: string,
     @Query('canPublish') canPublish: string,
     @Request() req,
-  ): Promise<{ token: string }> {
+  ): Promise<{ token: string; url: string }> {
     const identity: string = req.user.username;
     return this.roomsService.generateLivekitToken(room, identity, canPublish !== 'false');
   }

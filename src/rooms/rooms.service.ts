@@ -761,18 +761,31 @@ export class RoomsService {
     roomName: string,
     identity: string,
     canPublish = true,
-  ): Promise<{ token: string }> {
+  ): Promise<{ token: string; url: string }> {
     const { AccessToken } = await import('livekit-server-sdk');
-    const apiKey = process.env.LIVEKIT_API_KEY;
-    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    const apiKey = process.env.LIVEKIT_API_KEY?.trim();
+    const apiSecret = process.env.LIVEKIT_API_SECRET?.trim();
+    const url = process.env.LIVEKIT_URL?.trim();
+
+    if (!apiKey || !apiSecret || !url) {
+      throw new Error(
+        'LiveKit yapılandırması eksik: LIVEKIT_URL, LIVEKIT_API_KEY ve LIVEKIT_API_SECRET gerekli',
+      );
+    }
+
+    const safeRoomName = String(roomName || '').trim();
+    if (!safeRoomName) {
+      throw new Error('LiveKit oda adı boş olamaz');
+    }
+
     const at = new AccessToken(apiKey, apiSecret, { identity, ttl: '2h' });
     at.addGrant({
       roomJoin: true,
-      room: roomName,
+      room: safeRoomName,
       canPublish,
       canSubscribe: true,
       canPublishData: true,
     });
-    return { token: await at.toJwt() };
+    return { token: await at.toJwt(), url };
   }
 }
