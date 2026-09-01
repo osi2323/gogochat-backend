@@ -81,11 +81,11 @@ export class SystemSettingsController {
       .trim()
       .toLocaleLowerCase('tr-TR');
 
-    // ChatsON özel global duyurusu yalnızca "konsol" hesabına açıktır.
+    // GogoChat özel global duyurusu yalnızca "konsol" hesabına açıktır.
     // Rütbe/yıldız yükselmesi bu yetkiyi otomatik olarak kazandırmaz.
     if (normalizedUsername !== 'konsol') {
       throw new ForbiddenException(
-        'Global ChatsON duyurusu yalnızca Konsol hesabına özeldir.',
+        'Global GogoChat duyurusu yalnızca Konsol hesabına özeldir.',
       );
     }
   }

@@ -119,6 +119,7 @@ export class SystemSettingsService {
     mobileHeaderColor: string;
     mobileFooterColor: string;
     chatSiteTheme: string;
+    chatVoiceLayout: string;
     siteOwners: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
     managers: Array<{ id: number; username: string; icon: string | null; gender: string | null; roleName: string | null; starCount: number; starColor: string | null }>;
   }> {
@@ -134,6 +135,7 @@ export class SystemSettingsService {
         mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
         mobileFooterColor: settings.mobileFooterColor || '#0057B8',
         chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(settings.chatSiteTheme) ? settings.chatSiteTheme : 'dark',
+        chatVoiceLayout: ['bottom','right','header','floating'].includes(settings.chatVoiceLayout) ? settings.chatVoiceLayout : 'right',
         siteOwners: [],
         managers: [],
       };
@@ -171,6 +173,7 @@ export class SystemSettingsService {
       mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
       mobileFooterColor: settings.mobileFooterColor || '#0057B8',
       chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(settings.chatSiteTheme) ? settings.chatSiteTheme : 'dark',
+      chatVoiceLayout: ['bottom','right','header','floating'].includes(settings.chatVoiceLayout) ? settings.chatVoiceLayout : 'right',
       siteOwners: mapNames(ownerNames),
       managers: mapNames(managerNames),
     };
@@ -943,6 +946,7 @@ export class SystemSettingsService {
       mobileHeaderColor: settings.mobileHeaderColor || '#0057B8',
       mobileFooterColor: settings.mobileFooterColor || '#0057B8',
       chatSiteTheme: ['dark', 'light', 'glass', 'neon'].includes(settings.chatSiteTheme) ? settings.chatSiteTheme : 'dark',
+      chatVoiceLayout: ['bottom','right','header','floating'].includes(settings.chatVoiceLayout) ? settings.chatVoiceLayout : 'right',
       homePageImage: settings.homePageImage ?? null,
       homePageLogo: settings.homePageLogo ?? null,
       chatHeaderLogo: settings.chatHeaderLogo ?? null,

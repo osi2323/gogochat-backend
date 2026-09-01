@@ -424,7 +424,7 @@ export class RoomsService {
         userStarCount,
         roomId: room.id,
         roomName: room.name,
-        redirectRoomSlug: 'lobby',
+        redirectRoomSlug: undefined,
       };
     }
 
@@ -439,7 +439,7 @@ export class RoomsService {
         userStarCount,
         roomId: room.id,
         roomName: room.name,
-        redirectRoomSlug: 'lobby',
+        redirectRoomSlug: undefined,
       };
     }
 

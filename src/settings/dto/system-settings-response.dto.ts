@@ -117,6 +117,9 @@ export class SystemSettingsResponseDto {
   @ApiProperty({ description: 'Site sohbet teması', example: 'glass' })
   chatSiteTheme: string;
 
+  @ApiProperty({ description: 'Mobil mikrofon yerleşimi', example: 'right' })
+  chatVoiceLayout: string;
+
   @ApiProperty({ description: 'Ana sayfa arka plan resmi', nullable: true })
   homePageImage?: string | null;
 

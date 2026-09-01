@@ -205,6 +205,12 @@ export class UpdateSystemSettingsDto {
   @MaxLength(20)
   chatSiteTheme?: string;
 
+  @ApiPropertyOptional({ description: 'Mobil mikrofon yerleşimi', enum: ['bottom', 'right', 'header', 'floating'] })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  chatVoiceLayout?: string;
+
   @ApiPropertyOptional({
     description: 'Ana sayfa arka plan resmi (URL veya Data URL)',
   })
