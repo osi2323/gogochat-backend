@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS profiles(user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,display_name varchar(64),city varchar(80),country varchar(80),bio varchar(500),avatar_url text);
+CREATE TABLE IF NOT EXISTS room_members(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),room_id uuid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,joined_at timestamptz NOT NULL DEFAULT now(),UNIQUE(room_id,user_id));
+CREATE TABLE IF NOT EXISTS messages(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),room_id uuid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,body varchar(4000) NOT NULL CHECK(length(trim(body))>0),created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS idx_messages_room_created ON messages(room_id,created_at DESC,id DESC);

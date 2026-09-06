@@ -1,0 +1,11 @@
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_asset_id uuid REFERENCES media_assets(id) ON DELETE SET NULL;
+ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS media_asset_id uuid REFERENCES media_assets(id) ON DELETE SET NULL;
+ALTER TABLE messages ALTER COLUMN body SET DEFAULT '';
+ALTER TABLE direct_messages ALTER COLUMN body SET DEFAULT '';
+ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_content_required;
+ALTER TABLE messages ADD CONSTRAINT messages_content_required CHECK (deleted_at IS NOT NULL OR length(btrim(body)) > 0 OR media_asset_id IS NOT NULL);
+ALTER TABLE direct_messages DROP CONSTRAINT IF EXISTS direct_messages_content_required;
+ALTER TABLE direct_messages ADD CONSTRAINT direct_messages_content_required CHECK (deleted_at IS NOT NULL OR length(btrim(body)) > 0 OR media_asset_id IS NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_media_single_attachment ON media_assets(attached_id) WHERE attached_id IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_media ON messages(media_asset_id) WHERE media_asset_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_dm_media ON direct_messages(media_asset_id) WHERE media_asset_id IS NOT NULL;
