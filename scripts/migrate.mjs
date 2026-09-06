@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,7 @@ if (!databaseUrl) {
 
 // Resolve from this script, never from process.cwd(); deploy providers may change cwd.
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const migrationsDir = path.resolve(scriptDir, '../../database/migrations');
+const migrationsDir = path.resolve(scriptDir, '../database/migrations');
 if (!fs.existsSync(migrationsDir)) {
   console.error(`Migration aborted: directory not found: ${migrationsDir}`);
   process.exit(1);
@@ -87,3 +87,4 @@ try {
   }
   await client.end().catch(() => undefined);
 }
+
