@@ -1,2 +1,3 @@
-import {Column,CreateDateColumn,Entity,PrimaryGeneratedColumn,Unique} from 'typeorm';
-@Entity('room_bans')@Unique(['roomId','userId'])export class RoomBan{@PrimaryGeneratedColumn('uuid')id!:string;@Column({name:'room_id',type:'uuid'})roomId!:string;@Column({name:'user_id',type:'uuid'})userId!:string;@Column({name:'actor_id',type:'uuid'})actorId!:string;@Column({name:'reason',length:500,nullable:true})reason!:string|null;@Column({name:'expires_at',type:'timestamptz',nullable:true})expiresAt!:Date|null;@CreateDateColumn({name:'created_at'})createdAt!:Date;}
+﻿import {Column,CreateDateColumn,Entity,PrimaryGeneratedColumn,Unique} from 'typeorm';
+@Entity('room_bans')@Unique(['roomId','userId'])export class RoomBan{@PrimaryGeneratedColumn('uuid')id!:string;@Column({name:'room_id',type:'uuid'})roomId!:string;@Column({name:'user_id',type:'uuid'})userId!:string;@Column({name:'actor_id',type:'uuid'})actorId!:string;@Column({name:'reason',type:'varchar',length:500,nullable:true})reason!:string|null;@Column({name:'expires_at',type:'timestamptz',nullable:true})expiresAt!:Date|null;@CreateDateColumn({name:'created_at'})createdAt!:Date;}
+
