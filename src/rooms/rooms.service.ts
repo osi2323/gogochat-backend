@@ -1,0 +1,1 @@
+import {Injectable} from '@nestjs/common';import {InjectRepository} from '@nestjs/typeorm';import {Repository} from 'typeorm';import {Room} from './room.entity';@Injectable() export class RoomsService{constructor(@InjectRepository(Room)private readonly repo:Repository<Room>){} list(){return this.repo.find({order:{createdAt:'ASC'}})}}

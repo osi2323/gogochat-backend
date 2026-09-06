@@ -1,0 +1,2 @@
+import {BadRequestException,Injectable} from '@nestjs/common';import {InjectRepository} from '@nestjs/typeorm';import {Repository} from 'typeorm';import {Rank} from './rank.entity';
+@Injectable() export class RanksService{constructor(@InjectRepository(Rank) private readonly repo:Repository<Rank>){} list(){return this.repo.find({order:{starCount:'ASC'}})} async byStars(stars:number){if(stars<1||stars>27)throw new BadRequestException('Rütbe 1-27 arasında olmalı.');return this.repo.findOneByOrFail({starCount:stars});}}

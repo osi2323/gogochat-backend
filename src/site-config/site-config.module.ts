@@ -1,0 +1,2 @@
+import {Module} from '@nestjs/common';import {TypeOrmModule} from '@nestjs/typeorm';import {SiteSetting} from '../admin/site-setting.entity';import {SiteConfigController} from './site-config.controller';import {SiteConfigService} from './site-config.service';
+@Module({imports:[TypeOrmModule.forFeature([SiteSetting])],controllers:[SiteConfigController],providers:[SiteConfigService],exports:[SiteConfigService]})export class SiteConfigModule{}

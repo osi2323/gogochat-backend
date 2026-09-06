@@ -1,0 +1,2 @@
+import {Column,Entity,PrimaryGeneratedColumn,Unique} from 'typeorm';
+@Entity('room_members')@Unique(['roomId','userId'])export class RoomMember{@PrimaryGeneratedColumn('uuid')id!:string;@Column({name:'room_id',type:'uuid'})roomId!:string;@Column({name:'user_id',type:'uuid'})userId!:string;@Column({name:'muted_until',type:'timestamptz',nullable:true})mutedUntil!:Date|null;@Column({name:'joined_at',type:'timestamptz',default:()=> 'CURRENT_TIMESTAMP'})joinedAt!:Date;}

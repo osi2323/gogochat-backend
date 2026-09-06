@@ -1,0 +1,2 @@
+import {Column,CreateDateColumn,Entity,PrimaryGeneratedColumn,UpdateDateColumn} from 'typeorm';
+@Entity('friendships') export class Friendship{@PrimaryGeneratedColumn('uuid')id!:string;@Column('uuid',{name:'requester_id'})requesterId!:string;@Column('uuid',{name:'addressee_id'})addresseeId!:string;@Column({length:16,default:'pending'})status!:'pending'|'accepted'|'rejected';@CreateDateColumn({name:'created_at'})createdAt!:Date;@UpdateDateColumn({name:'updated_at'})updatedAt!:Date;}

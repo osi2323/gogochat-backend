@@ -1,0 +1,2 @@
+import {Column,Entity,PrimaryGeneratedColumn} from 'typeorm';
+@Entity('ranks') export class Rank{@PrimaryGeneratedColumn('uuid') id!:string;@Column({unique:true}) name!:string;@Column({name:'star_count',type:'smallint',unique:true}) starCount!:number;@Column({name:'star_color',default:'#8B7CF6'}) starColor!:string;@Column({default:'⭐'}) icon!:string;@Column({name:'microphone_duration',type:'int',default:300}) microphoneDuration!:number;@Column({type:'jsonb',default:()=>"'{}'::jsonb"}) permissions!:Record<string,boolean>;}

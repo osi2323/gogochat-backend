@@ -1,0 +1,1 @@
+import {Controller,Get} from '@nestjs/common';import {RanksService} from './ranks.service';@Controller('ranks') export class RanksController{constructor(private readonly ranks:RanksService){}@Get() list(){return this.ranks.list()}}

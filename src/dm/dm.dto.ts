@@ -1,0 +1,1 @@
+import {IsOptional,IsString,IsUUID,MaxLength} from 'class-validator';export class SendDmDto{@IsUUID()clientId!:string;@IsOptional()@IsString()@MaxLength(4000)body?:string;@IsOptional()@IsUUID()mediaAssetId?:string;}
