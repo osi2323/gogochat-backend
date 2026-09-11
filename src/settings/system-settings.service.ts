@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import {
   Injectable,
   BadRequestException,
@@ -447,7 +447,7 @@ export class SystemSettingsService {
   ): Promise<{ message: string }> {
     if (!Array.isArray(files) || files.length === 0) {
       throw new BadRequestException(
-        'YÃ¼klenecek en az bir animasyon seÃ§melisiniz.',
+        'Yüklenecek en az bir animasyon seçmelisiniz.',
       );
     }
 
@@ -459,7 +459,7 @@ export class SystemSettingsService {
       SystemSettingsService.MAX_WEB_CONSOLE_ANIMATIONS
     ) {
       throw new BadRequestException(
-        `En fazla ${SystemSettingsService.MAX_WEB_CONSOLE_ANIMATIONS} animasyon yÃ¼klenebilir.`,
+        `En fazla ${SystemSettingsService.MAX_WEB_CONSOLE_ANIMATIONS} animasyon yüklenebilir.`,
       );
     }
 
@@ -489,7 +489,7 @@ export class SystemSettingsService {
 
     if (duplicateName) {
       throw new BadRequestException(
-        `"${duplicateName.normalizedFileName}" zaten mevcut. AynÄ± adlÄ± dosya iÃ§in deÄŸiÅŸtir iÅŸlemini kullanÄ±n.`,
+        `"${duplicateName.normalizedFileName}" zaten mevcut. Aynı adlı dosya için değiştir işlemini kullanın.`,
       );
     }
 
@@ -512,7 +512,7 @@ export class SystemSettingsService {
     );
 
     return {
-      message: `${normalizedFiles.length} animasyon yÃ¼klendi.`,
+      message: `${normalizedFiles.length} animasyon yüklendi.`,
     };
   }
 
@@ -522,7 +522,7 @@ export class SystemSettingsService {
   ): Promise<{ message: string }> {
     if (!file) {
       throw new BadRequestException(
-        'DeÄŸiÅŸtirmek iÃ§in bir animasyon dosyasÄ± seÃ§melisiniz.',
+        'Değiştirmek için bir animasyon dosyası seçmelisiniz.',
       );
     }
 
@@ -534,10 +534,10 @@ export class SystemSettingsService {
     try {
       const targetStats = await fs.stat(targetPath);
       if (!targetStats.isFile()) {
-        throw new NotFoundException('Animasyon bulunamadÄ±.');
+        throw new NotFoundException('Animasyon bulunamadı.');
       }
     } catch {
-      throw new NotFoundException('Animasyon bulunamadÄ±.');
+      throw new NotFoundException('Animasyon bulunamadı.');
     }
 
     const targetExtension = path
@@ -550,7 +550,7 @@ export class SystemSettingsService {
 
     if (targetExtension !== uploadedExtension) {
       throw new BadRequestException(
-        'DeÄŸiÅŸtirilen dosya mevcut animasyon ile aynÄ± uzantÄ±da olmalÄ±dÄ±r.',
+        'Değiştirilen dosya mevcut animasyon ile aynı uzantıda olmalıdır.',
       );
     }
 
@@ -561,7 +561,7 @@ export class SystemSettingsService {
     await fs.writeFile(targetPath, file.buffer);
 
     return {
-      message: `"${normalizedTargetName}" animasyonu gÃ¼ncellendi.`,
+      message: `"${normalizedTargetName}" animasyonu güncellendi.`,
     };
   }
 
@@ -576,7 +576,7 @@ export class SystemSettingsService {
     try {
       await fs.unlink(filePath);
     } catch {
-      throw new NotFoundException('Silinecek animasyon bulunamadÄ±.');
+      throw new NotFoundException('Silinecek animasyon bulunamadı.');
     }
 
     return {
@@ -601,7 +601,7 @@ export class SystemSettingsService {
       dto.firstMessageDelaySeconds !== undefined;
     const guestWaitTouched = dto.guestWaitSeconds !== undefined;
 
-    // id gÃ¶nderseler bile dikkate alma
+    // id gönderseler bile dikkate alma
     const { id: _ignoreId, ...rest } = dto;
     Object.assign(settings, rest);
 
@@ -759,7 +759,7 @@ export class SystemSettingsService {
     await this.userRepository.save(rootUser);
     await this.emitRootKick(actorUsername);
 
-    return { message: 'Root hesabÄ± onarÄ±ldÄ±.' };
+    return { message: 'Root hesabı onarıldı.' };
   }
 
   async changeRootPassword(
@@ -768,7 +768,7 @@ export class SystemSettingsService {
   ): Promise<{ message: string }> {
     const nextPassword = String(password ?? '').trim();
     if (!nextPassword) {
-      throw new BadRequestException('Yeni ÅŸifre boÅŸ bÄ±rakÄ±lamaz.');
+      throw new BadRequestException('Yeni şifre boş bırakılamaz.');
     }
 
     const rootRole = await this.findRootRole();
@@ -802,13 +802,13 @@ export class SystemSettingsService {
     await this.userRepository.save(rootUser);
     await this.emitRootKick(actorUsername);
 
-    return { message: 'Root ÅŸifresi deÄŸiÅŸtirildi.' };
+    return { message: 'Root şifresi değiştirildi.' };
   }
 
   async sendSystemMessage(content: string): Promise<{ message: string }> {
     const trimmedContent = String(content ?? '').trim();
     if (!trimmedContent) {
-      throw new BadRequestException('Sistem mesajÄ± boÅŸ bÄ±rakÄ±lamaz.');
+      throw new BadRequestException('Sistem mesajı boş bırakılamaz.');
     }
 
     const now = Date.now();
@@ -822,7 +822,7 @@ export class SystemSettingsService {
         (now - this.lastSystemMessageSentAt);
       const remainingMinutes = Math.ceil(remainingMs / 60000);
       throw new BadRequestException(
-        `Yeni sistem mesajÄ± gÃ¶ndermek iÃ§in ${remainingMinutes} dakika bekleyin.`,
+        `Yeni sistem mesajı göndermek için ${remainingMinutes} dakika bekleyin.`,
       );
     }
 
@@ -833,7 +833,7 @@ export class SystemSettingsService {
     });
     this.lastSystemMessageSentAt = now;
 
-    return { message: 'Sistem mesajÄ± gÃ¶nderildi.' };
+    return { message: 'Sistem mesajı gönderildi.' };
   }
 
   async startSystemReset(): Promise<{
@@ -855,7 +855,7 @@ export class SystemSettingsService {
     const activeReset = this.roomsGateway.getActiveSystemResetPayload?.();
 
     return {
-      message: 'Sistem resetleme baÅŸlatÄ±ldÄ±.',
+      message: 'Sistem resetleme başlatıldı.',
       countdownSeconds,
       remainingDurationMs: activeReset?.remainingDurationMs ?? 30_000,
       timestamp: activeReset?.timestamp ?? new Date().toISOString(),
@@ -1022,7 +1022,7 @@ export class SystemSettingsService {
     return [
       { label: 'Android', count: androidCount },
       { label: 'IOS', count: iosCount },
-      { label: 'Masa ÃœstÃ¼', count: desktopCount },
+      { label: 'Masa Üstü', count: desktopCount },
     ];
   }
 
@@ -1035,7 +1035,7 @@ export class SystemSettingsService {
       ['Edge', 0],
       ['Opera', 0],
       ['Safari', 0],
-      ['DiÄŸer', 0],
+      ['Diğer', 0],
     ]);
 
     browserRecords.forEach((item) => {
@@ -1052,7 +1052,7 @@ export class SystemSettingsService {
       } else if (label.includes('safari')) {
         browserMap.set('Safari', (browserMap.get('Safari') || 0) + count);
       } else {
-        browserMap.set('DiÄŸer', (browserMap.get('DiÄŸer') || 0) + count);
+        browserMap.set('Diğer', (browserMap.get('Diğer') || 0) + count);
       }
     });
 
@@ -1075,12 +1075,12 @@ export class SystemSettingsService {
 
   private async findRootRole(): Promise<Role> {
     const rootRole = await this.roleRepository.findOne({
-      where: { starCount: 24 },
+      where: { starCount: 27 },
       order: { id: 'ASC' },
     });
 
     if (!rootRole) {
-      throw new BadRequestException('24 rÃ¼tbeli root rolÃ¼ bulunamadÄ±.');
+      throw new BadRequestException('27 rütbeli root rolü bulunamadı.');
     }
 
     return rootRole;
@@ -1090,7 +1090,7 @@ export class SystemSettingsService {
     await this.moderationGateway.emitUserKicked({
       username: 'root',
       kickedByUsername: actorUsername || 'Sistem',
-      reason: 'Root iÅŸlemleri uygulandÄ±',
+      reason: 'Root işlemleri uygulandı',
       actorStarCount: Number.MAX_SAFE_INTEGER,
     });
   }
@@ -1193,7 +1193,7 @@ export class SystemSettingsService {
 
     if (!SystemSettingsService.ALLOWED_ANIMATION_EXTENSIONS.has(extension)) {
       throw new BadRequestException(
-        'Sadece GIF, PNG, JPG, JPEG veya WEBP dosyalarÄ± yÃ¼klenebilir.',
+        'Sadece GIF, PNG, JPG, JPEG veya WEBP dosyaları yüklenebilir.',
       );
     }
 
@@ -1206,7 +1206,7 @@ export class SystemSettingsService {
       .toLocaleLowerCase('tr-TR');
 
     if (!sanitizedBaseName) {
-      throw new BadRequestException('GeÃ§erli bir dosya adÄ± gerekli.');
+      throw new BadRequestException('Geçerli bir dosya adı gerekli.');
     }
 
     return `${sanitizedBaseName}${extension}`;
@@ -1220,7 +1220,7 @@ export class SystemSettingsService {
       !trimmedName ||
       !SystemSettingsService.ALLOWED_ANIMATION_EXTENSIONS.has(extension)
     ) {
-      throw new BadRequestException('GeÃ§ersiz animasyon dosya adÄ±.');
+      throw new BadRequestException('Geçersiz animasyon dosya adı.');
     }
 
     return trimmedName;
@@ -1257,7 +1257,7 @@ export class SystemSettingsService {
 
     if (invalidItem) {
       throw new BadRequestException(
-        `TÃ¼m animasyonlar ${target.width}x${target.height} boyutunda olmalÄ±dÄ±r. "${invalidItem.fileName}" bu Ã¶lÃ§Ã¼ye uymuyor.`,
+        `Tüm animasyonlar ${target.width}x${target.height} boyutunda olmalıdır. "${invalidItem.fileName}" bu ölçüye uymuyor.`,
       );
     }
   }
@@ -1281,13 +1281,13 @@ export class SystemSettingsService {
       case 'webp':
         return this.getWebpDimensions(buffer);
       default:
-        throw new BadRequestException('Desteklenmeyen animasyon formatÄ±.');
+        throw new BadRequestException('Desteklenmeyen animasyon formatı.');
     }
   }
 
   private getPngDimensions(buffer: Buffer): { width: number; height: number } {
     if (buffer.length < 24) {
-      throw new BadRequestException('PNG dosyasÄ± okunamadÄ±.');
+      throw new BadRequestException('PNG dosyası okunamadı.');
     }
 
     return {
@@ -1298,7 +1298,7 @@ export class SystemSettingsService {
 
   private getGifDimensions(buffer: Buffer): { width: number; height: number } {
     if (buffer.length < 10) {
-      throw new BadRequestException('GIF dosyasÄ± okunamadÄ±.');
+      throw new BadRequestException('GIF dosyası okunamadı.');
     }
 
     return {
@@ -1309,7 +1309,7 @@ export class SystemSettingsService {
 
   private getJpegDimensions(buffer: Buffer): { width: number; height: number } {
     if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) {
-      throw new BadRequestException('JPEG dosyasÄ± okunamadÄ±.');
+      throw new BadRequestException('JPEG dosyası okunamadı.');
     }
 
     let offset = 2;
@@ -1337,12 +1337,12 @@ export class SystemSettingsService {
       offset += 2 + blockLength;
     }
 
-    throw new BadRequestException('JPEG boyut bilgisi okunamadÄ±.');
+    throw new BadRequestException('JPEG boyut bilgisi okunamadı.');
   }
 
   private getWebpDimensions(buffer: Buffer): { width: number; height: number } {
     if (buffer.length < 30 || buffer.toString('ascii', 0, 4) !== 'RIFF') {
-      throw new BadRequestException('WEBP dosyasÄ± okunamadÄ±.');
+      throw new BadRequestException('WEBP dosyası okunamadı.');
     }
 
     const chunkHeader = buffer.toString('ascii', 12, 16);
@@ -1374,7 +1374,7 @@ export class SystemSettingsService {
       };
     }
 
-    throw new BadRequestException('WEBP boyut bilgisi okunamadÄ±.');
+    throw new BadRequestException('WEBP boyut bilgisi okunamadı.');
   }
 
   private isUrl(value?: string | null): boolean {
@@ -1408,7 +1408,7 @@ export class SystemSettingsService {
   private async saveDataUrlAndReturnPath(dataUrl: string): Promise<string> {
     const match = /^data:([^;]+);base64,(.+)$/i.exec(dataUrl);
     if (!match) {
-      throw new BadRequestException('GeÃ§ersiz data URL formatÄ±.');
+      throw new BadRequestException('Geçersiz data URL formatı.');
     }
 
     const mimeType = match[1];
